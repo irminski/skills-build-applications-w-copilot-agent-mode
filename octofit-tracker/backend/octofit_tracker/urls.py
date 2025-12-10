@@ -23,8 +23,11 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 
 codespace_name = os.environ.get('CODESPACE_NAME')
+# Use the Codespace domain when available. Use HTTP to avoid certificate issues
+# when the development proxy presents mismatched certs. Paths are mounted under
+# `/api/` so we build URLs accordingly.
 if codespace_name:
-    base_url = f"https://{codespace_name}-8000.app.github.dev"
+    base_url = f"http://{codespace_name}-8000.app.github.dev"
 else:
     base_url = "http://localhost:8000"
 
@@ -39,15 +42,15 @@ router.register(r'workouts', WorkoutViewSet)
 @api_view(['GET'])
 def api_root(request, format=None):
     return Response({
-        'users': request.build_absolute_uri('/users/'),
-        'teams': request.build_absolute_uri('/teams/'),
-        'activities': request.build_absolute_uri('/activities/'),
-        'leaderboard': request.build_absolute_uri('/leaderboard/'),
-        'workouts': request.build_absolute_uri('/workouts/'),
+        'users': f"{base_url}/api/users/",
+        'teams': f"{base_url}/api/teams/",
+        'activities': f"{base_url}/api/activities/",
+        'leaderboard': f"{base_url}/api/leaderboard/",
+        'workouts': f"{base_url}/api/workouts/",
     })
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', api_root, name='api_root'),
-    path('', include(router.urls)),
+    path('api/', include(router.urls)),
 ]
